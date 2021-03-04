@@ -76,7 +76,7 @@
         }).addTo(map);
 
         // load the pbf layer
-        fetch("data/data.pbf")
+        fetch("./data/data.pbf")
         .then(res => res.arrayBuffer())
         .then(response => {
             // convert aRBF To geojson
