@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School District</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin=""
+    />
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin="">
+    </script>
+
+    <style>
+        body {
+            margin:0;
+            padding: 0;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .title {
+            font-size: 1.5em;
+            margin:0;
+        }
+    </style>
+</head>
+<body>
+    <div class="map" id="map"></div>
+    <script src="https://mazemap.github.io/Leaflet.LayerGroup.Collision/demo/rbush/rbush.js"></script>
+    <script src="https://mazemap.github.io/Leaflet.LayerGroup.Collision/src/Leaflet.LayerGroup.Collision.js"></script>
+    <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+    <script src="https://unpkg.com/geobuf@3.0.2/dist/geobuf.js"></script>
+
+    <script>
+        let map = L.map('map').setView([ 42.9946,  -75.9704], 8);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}' + (L.Browser.retina ? '@2x.png' : '.png'), {
+            attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+            minZoom: 0
+        }).addTo(map);
+
+        // add the district layer
+        let schoolDistrict = L.geoJSON(null, {
+            style:function(feature) {
+                return {
+                    fillColor:'#f29393',
+                    weight:0.5,
+                    color:'#8c8c8c',
+                }
+            },
+            onEachFeature:function(feature, layer) {
+                let popupString = "<div class='popup-content'><h6 class='title'>"+ feature.properties.SCHOOLDIST +"</h6>"+
+                    "<table>"+
+                        "<tr>"+
+                            "<td class='itemKey'>Primary Pol</td><td class='itemValue'>"+ feature.properties.PRIMARYPOL +"</td>"+
+                        "</tr>"+
+                        "<tr>"+
+                            "<td class='itemKey'>SED dir B 1</td><td class='itemValue'>"+ feature.properties.SEDdir_B_1 +"</td>"+
+                        "</tr>"+
+                        "<tr>"+
+                            "<td class='itemKey'>Popular Name</td><td class='itemValue'>"+ feature.properties.POPULAR_NA +"</td>"+
+                        "</tr>"+
+                    "</table>";
+
+                layer.bindPopup(popupString);
+            }
+        }).addTo(map);
+
+        // load the pbf layer
+        fetch("/data/data.pbf")
+        .then(res => res.arrayBuffer())
+        .then(response => {
+            // convert aRBF To geojson
+            let data = geobuf.decode(new Pbf(response));
+
+            // append data to geojson object
+            schoolDistrict.addData(data);
+        });
+
+        // layer control
+        let baseLayers = {};
+        let overlay = {
+            'School District':schoolDistrict,
+        };
+
+        L.control.layers(baseLayers, overlay).addTo(map);
+    </script>
+</body>
+</html>
