@@ -39,7 +39,11 @@
     <script src="https://unpkg.com/geobuf@3.0.2/dist/geobuf.js"></script>
 
     <script>
-        let map = L.map('map').setView([ 42.9946,  -75.9704], 8);
+        let map = L.map('map', {
+            center:[34.7937, -78.7498],
+            zoom:10,
+
+        });
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}' + (L.Browser.retina ? '@2x.png' : '.png'), {
             attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -58,16 +62,16 @@
                 }
             },
             onEachFeature:function(feature, layer) {
-                let popupString = "<div class='popup-content'><h6 class='title'>"+ feature.properties.SCHOOLDIST +"</h6>"+
+                let popupString = "<div class='popup-content'><h6 class='title'>"+ feature.properties.School +"</h6>"+
                     "<table>"+
                         "<tr>"+
-                            "<td class='itemKey'>Primary Pol</td><td class='itemValue'>"+ feature.properties.PRIMARYPOL +"</td>"+
+                            "<td class='itemKey'>Grades</td><td class='itemValue'>"+ feature.properties.Grades +"</td>"+
                         "</tr>"+
                         "<tr>"+
-                            "<td class='itemKey'>SED dir B 1</td><td class='itemValue'>"+ feature.properties.SEDdir_B_1 +"</td>"+
+                            "<td class='itemKey'>City</td><td class='itemValue'>"+ feature.properties.City +"</td>"+
                         "</tr>"+
                         "<tr>"+
-                            "<td class='itemKey'>Popular Name</td><td class='itemValue'>"+ feature.properties.POPULAR_NA +"</td>"+
+                            "<td class='itemKey'>Address</td><td class='itemValue'>"+ feature.properties.Address +"</td>"+
                         "</tr>"+
                     "</table>";
 
@@ -75,7 +79,74 @@
             }
         }).addTo(map);
 
-        // load the pbf layer
+        function getPopupString(feature) {
+            let popupString = "<div class='popup-content'><h6 class='title'>"+ feature.properties.School +"</h6>"+
+                    "<table>"+
+                        "<tr>"+
+                            "<td class='itemKey'>Grades</td><td class='itemValue'>"+ feature.properties.Grades +"</td>"+
+                        "</tr>"+
+                        "<tr>"+
+                            "<td class='itemKey'>City</td><td class='itemValue'>"+ feature.properties.City +"</td>"+
+                        "</tr>"+
+                        "<tr>"+
+                            "<td class='itemKey'>Address</td><td class='itemValue'>"+ feature.properties.Address +"</td>"+
+                        "</tr>"+
+                        "<tr>"+
+                            "<td class='itemKey'>Programs</td><td class='itemValue'>"+ feature.properties.Programs +"</td>"+
+                        "</tr>"+
+                        "<tr>"+
+                            "<td class='itemKey'>Telephone</td><td class='itemValue'>"+ feature.properties.Telephone +"</td>"+
+                        "</tr>"+
+                    "</table>";
+
+            return popupString;
+        }
+
+        // elementary School
+        let elementary = L.geoJSON(null, {
+            style:function(feature) {
+                return {
+                    fillColor:'#ae017e',
+                    weight:0.8,
+                    color:'#545454',
+                }
+            },
+            onEachFeature:function(feature, layer) {
+                let popupString = getPopupString(feature);
+                layer.bindPopup(popupString);
+            }
+        });
+
+        // middle school
+        let middleSchool = L.geoJSON(null, {
+            style:function(feature) {
+                return {
+                    fillColor:'#238b45',
+                    weight:0.8,
+                    color:'#545454',
+                }
+            },
+            onEachFeature:function(feature, layer) {
+                let popupString = getPopupString(feature);
+                layer.bindPopup(popupString);
+            }
+        });
+
+        // high school
+        let highSchool = L.geoJSON(null, {
+            style:function(feature) {
+                return {
+                    fillColor:'#225ea8',
+                    weight:0.8,
+                    color:'#545454',
+                }
+            },
+            onEachFeature:function(feature, layer) {
+                let popupString = getPopupString(feature);
+                layer.bindPopup(popupString);
+            }
+        });
+        
         fetch("./data/data.pbf")
         .then(res => res.arrayBuffer())
         .then(response => {
@@ -86,13 +157,39 @@
             schoolDistrict.addData(data);
         });
 
+        // load the pbf layer
+        var dataObject = [ elementary, middleSchool, highSchool];
+        var dataStrings = ["elementary.pbf", "middle_district.pbf", "high_school.pbf"];
+        
+        dataStrings.forEach((dataURL, index) => {
+            let url ="./data/" + dataURL;
+
+            fetch(url)
+            .then(res => res.arrayBuffer())
+            .then(response => {
+                // conversion
+                console.log(index);
+
+                // convert aRBF To geojson
+                let data = geobuf.decode(new Pbf(response));
+
+                dataObject[index].addData(data);
+            })
+            .catch(err =>{
+                console.error(err);
+            });
+        });
+
         // layer control
         let baseLayers = {};
         let overlay = {
             'School District':schoolDistrict,
+            'Elementary School':elementary,
+            'Middle School':middleSchool,
+            'High School':highSchool
         };
 
-        L.control.layers(baseLayers, overlay).addTo(map);
+        L.control.layers(overlay, baseLayers).addTo(map);
     </script>
 </body>
 </html>
