@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School District</title>
+    <title>School Districts</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
         integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
         crossorigin=""
@@ -53,32 +53,6 @@
         }).addTo(map);
 
         // add the district layer
-        let schoolDistrict = L.geoJSON(null, {
-            style:function(feature) {
-                return {
-                    fillColor:'#f29393',
-                    weight:0.5,
-                    color:'#8c8c8c',
-                }
-            },
-            onEachFeature:function(feature, layer) {
-                let popupString = "<div class='popup-content'><h6 class='title'>"+ feature.properties.School +"</h6>"+
-                    "<table>"+
-                        "<tr>"+
-                            "<td class='itemKey'>Grades</td><td class='itemValue'>"+ feature.properties.Grades +"</td>"+
-                        "</tr>"+
-                        "<tr>"+
-                            "<td class='itemKey'>City</td><td class='itemValue'>"+ feature.properties.City +"</td>"+
-                        "</tr>"+
-                        "<tr>"+
-                            "<td class='itemKey'>Address</td><td class='itemValue'>"+ feature.properties.Address +"</td>"+
-                        "</tr>"+
-                    "</table>";
-
-                layer.bindPopup(popupString);
-            }
-        }).addTo(map);
-
         function getPopupString(feature) {
             let popupString = "<div class='popup-content'><h6 class='title'>"+ feature.properties.School +"</h6>"+
                     "<table>"+
@@ -115,7 +89,7 @@
                 let popupString = getPopupString(feature);
                 layer.bindPopup(popupString);
             }
-        });
+        }).addTo(map);
 
         // middle school
         let middleSchool = L.geoJSON(null, {
@@ -146,16 +120,6 @@
                 layer.bindPopup(popupString);
             }
         });
-        
-        fetch("./data/data.pbf")
-        .then(res => res.arrayBuffer())
-        .then(response => {
-            // convert aRBF To geojson
-            let data = geobuf.decode(new Pbf(response));
-
-            // append data to geojson object
-            schoolDistrict.addData(data);
-        });
 
         // load the pbf layer
         var dataObject = [ elementary, middleSchool, highSchool];
@@ -183,7 +147,6 @@
         // layer control
         let baseLayers = {};
         let overlay = {
-            'School District':schoolDistrict,
             'Elementary School':elementary,
             'Middle School':middleSchool,
             'High School':highSchool
